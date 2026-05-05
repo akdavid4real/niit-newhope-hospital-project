@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/mongodb"
 import Appointment from "@/models/Appointment"
+import "@/models/Doctor"
+import "@/models/Ward"
 
 export const dynamic = "force-dynamic"
 export const runtime = "nodejs"
