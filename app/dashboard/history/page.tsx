@@ -51,8 +51,9 @@ export default function HistoryPage() {
     try {
       const response = await fetch("/api/history")
       const data = await response.json()
-      setHistory(data)
+      setHistory(Array.isArray(data) ? data : [])
     } catch (error) {
+      setHistory([])
       toast({
         title: "Error",
         description: "Failed to fetch medical history",

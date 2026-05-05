@@ -1,5 +1,7 @@
 import mongoose from "mongoose"
 
+const startOfDay = (value: Date) => new Date(value.getFullYear(), value.getMonth(), value.getDate())
+
 const PatientSchema = new mongoose.Schema(
   {
     FirstName: {
@@ -55,15 +57,22 @@ const PatientSchema = new mongoose.Schema(
       type: Date,
       required: [true, "Admit date is required"],
       validate: {
-        validator: (v: Date) => v >= new Date(new Date().setHours(0, 0, 0, 0)),
-        message: "Admit date must be today or later",
+        validator: function (this: any, v: Date) {
+          if (!v) return false
+          if (!this.isNew) return true
+          return startOfDay(v) >= startOfDay(new Date())
+        },
+        message: "Admit date must be today or later for new admissions",
       },
     },
     Discharge_Date: {
       type: Date,
       validate: {
         validator: function (this: any, v: Date) {
-          return !v || v >= this.Admit_Date
+          if (!v) return true
+          if (!this.isNew && !this.isModified("Discharge_Date")) return true
+          if (!this.Admit_Date) return false
+          return startOfDay(v) >= startOfDay(this.Admit_Date)
         },
         message: "Discharge date must be after admit date",
       },

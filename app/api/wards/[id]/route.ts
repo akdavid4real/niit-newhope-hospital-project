@@ -2,10 +2,14 @@ import { type NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/mongodb"
 import Ward from "@/models/Ward"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
+
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await context.params
     await dbConnect()
-    const ward = await Ward.findById(params.id)
+    const ward = await Ward.findById(id)
     if (!ward) {
       return NextResponse.json({ message: "Ward not found" }, { status: 404 })
     }
@@ -15,11 +19,12 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await context.params
     await dbConnect()
     const data = await request.json()
-    const ward = await Ward.findByIdAndUpdate(params.id, data, { new: true, runValidators: true })
+    const ward = await Ward.findByIdAndUpdate(id, data, { returnDocument: "after", runValidators: true })
     if (!ward) {
       return NextResponse.json({ message: "Ward not found" }, { status: 404 })
     }
@@ -29,10 +34,11 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await context.params
     await dbConnect()
-    const ward = await Ward.findByIdAndDelete(params.id)
+    const ward = await Ward.findByIdAndDelete(id)
     if (!ward) {
       return NextResponse.json({ message: "Ward not found" }, { status: 404 })
     }

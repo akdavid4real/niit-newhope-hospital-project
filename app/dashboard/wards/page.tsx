@@ -35,8 +35,9 @@ export default function WardsPage() {
     try {
       const response = await fetch("/api/wards/availability")
       const data = await response.json()
-      setWards(data)
+      setWards(Array.isArray(data) ? data : [])
     } catch (error) {
+      setWards([])
       toast({
         title: "Error",
         description: "Failed to fetch wards",

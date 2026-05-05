@@ -1,13 +1,13 @@
 // Nigerian doctor seed data matching the Doctor schema
-// All fields are included and names are full Nigerian names
+// Expanded to 8x the base dataset with distinct phone numbers
 
-module.exports = [
+const baseDoctors = [
   {
     FirstName: "Adebayo",
     LastName: "Ogundimu",
     Phone_Num: "+2348012345678",
     Employment_Type: "Resident",
-    Ward_ID: null, // Fill with ObjectId of a ward
+    Ward_ID: null,
   },
   {
     FirstName: "Fatima",
@@ -73,3 +73,10 @@ module.exports = [
     Ward_ID: null,
   },
 ]
+
+module.exports = Array.from({ length: 8 }, (_, batchIndex) =>
+  baseDoctors.map((doctor, doctorIndex) => ({
+    ...doctor,
+    Phone_Num: doctor.Phone_Num.slice(0, -1) + ((batchIndex + doctorIndex) % 10),
+  })),
+).flat()

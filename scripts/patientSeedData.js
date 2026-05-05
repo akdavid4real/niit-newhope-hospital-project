@@ -1,7 +1,7 @@
 // Nigerian patient seed data matching the Patient schema
-// All fields are included and names are full Nigerian names
+// Expanded to 8x the base dataset with distinct phones and dates
 
-module.exports = [
+const basePatients = [
   {
     FirstName: "John",
     LastName: "Okafor",
@@ -29,7 +29,6 @@ module.exports = [
     Admit_Date: "2025-06-02",
     Status: "Admitted",
     Treatment_Type: "Typhoid Fever",
-
   },
   {
     FirstName: "James",
@@ -44,7 +43,6 @@ module.exports = [
     Admit_Date: "2025-06-03",
     Status: "Admitted",
     Treatment_Type: "Appendicitis Surgery",
-
   },
   {
     FirstName: "Joshua",
@@ -59,7 +57,6 @@ module.exports = [
     Admit_Date: "2025-06-04",
     Status: "Admitted",
     Treatment_Type: "Asthma Management",
-
   },
   {
     FirstName: "Kennedy",
@@ -88,7 +85,6 @@ module.exports = [
     Admit_Date: "2025-06-06",
     Status: "Admitted",
     Treatment_Type: "Hypertension",
-
   },
   {
     FirstName: "Ifeanyi",
@@ -103,7 +99,6 @@ module.exports = [
     Admit_Date: "2025-06-07",
     Status: "Admitted",
     Treatment_Type: "Ulcer Treatment",
-
   },
   {
     FirstName: "Precious",
@@ -118,7 +113,6 @@ module.exports = [
     Admit_Date: "2025-06-08",
     Status: "Admitted",
     Treatment_Type: "Maternity Care",
-
   },
   {
     FirstName: "Angel",
@@ -133,7 +127,6 @@ module.exports = [
     Admit_Date: "2025-06-09",
     Status: "Admitted",
     Treatment_Type: "Sickle Cell Management",
-
   },
   {
     FirstName: "Temi",
@@ -148,7 +141,6 @@ module.exports = [
     Admit_Date: "2025-06-10",
     Status: "Admitted",
     Treatment_Type: "General Checkup",
-
   },
   {
     FirstName: "Tochukwu",
@@ -163,7 +155,6 @@ module.exports = [
     Admit_Date: "2025-06-11",
     Status: "Admitted",
     Treatment_Type: "Hernia Surgery",
-
   },
   {
     FirstName: "Kunle",
@@ -178,7 +169,6 @@ module.exports = [
     Admit_Date: "2025-06-12",
     Status: "Admitted",
     Treatment_Type: "Kidney Stone Removal",
-
   },
   {
     FirstName: "Teniola",
@@ -193,7 +183,6 @@ module.exports = [
     Admit_Date: "2025-06-13",
     Status: "Admitted",
     Treatment_Type: "ENT Surgery",
-
   },
   {
     FirstName: "Ayo",
@@ -208,7 +197,6 @@ module.exports = [
     Admit_Date: "2025-06-14",
     Status: "Admitted",
     Treatment_Type: "Orthopedic Care",
-
   },
   {
     FirstName: "Daniel",
@@ -223,6 +211,18 @@ module.exports = [
     Admit_Date: "2025-06-15",
     Status: "Admitted",
     Treatment_Type: "Eye Surgery",
-
   },
 ]
+
+module.exports = Array.from({ length: 8 }, (_, batchIndex) =>
+  basePatients.map((patient, patientIndex) => {
+    const day = String((patientIndex % 28) + 1).padStart(2, "0")
+    const month = String(((batchIndex % 6) + 1)).padStart(2, "0")
+
+    return {
+      ...patient,
+      Phone_Num: patient.Phone_Num.slice(0, -1) + ((batchIndex + patientIndex) % 10),
+      Admit_Date: `2025-${month}-${day}`,
+    }
+  }),
+).flat()

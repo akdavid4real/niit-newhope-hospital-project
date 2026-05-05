@@ -2,10 +2,14 @@ import { type NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/mongodb"
 import MedicalHistory from "@/models/MedicalHistory"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
+
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await context.params
     await dbConnect()
-    const history = await MedicalHistory.findById(params.id)
+    const history = await MedicalHistory.findById(id)
       .populate("Patient_ID", "FirstName LastName")
       .populate("Doctor_ID", "FirstName LastName")
       .populate("OriginalWard", "WardName")
@@ -19,11 +23,12 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await context.params
     await dbConnect()
     const data = await request.json()
-    const history = await MedicalHistory.findByIdAndUpdate(params.id, data, { new: true, runValidators: true })
+    const history = await MedicalHistory.findByIdAndUpdate(id, data, { returnDocument: "after", runValidators: true })
       .populate("Patient_ID", "FirstName LastName")
       .populate("Doctor_ID", "FirstName LastName")
       .populate("OriginalWard", "WardName")
@@ -37,10 +42,11 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await context.params
     await dbConnect()
-    const history = await MedicalHistory.findByIdAndDelete(params.id)
+    const history = await MedicalHistory.findByIdAndDelete(id)
     if (!history) {
       return NextResponse.json({ message: "Medical history not found" }, { status: 404 })
     }

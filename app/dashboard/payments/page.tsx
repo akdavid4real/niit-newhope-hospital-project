@@ -41,8 +41,9 @@ export default function PaymentsPage() {
     try {
       const response = await fetch("/api/payments")
       const data = await response.json()
-      setPayments(data)
+      setPayments(Array.isArray(data) ? data : [])
     } catch (error) {
+      setPayments([])
       toast({
         title: "Error",
         description: "Failed to fetch payments",

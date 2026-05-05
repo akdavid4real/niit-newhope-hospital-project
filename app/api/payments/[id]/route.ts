@@ -2,10 +2,14 @@ import { type NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/mongodb"
 import Payment from "@/models/Payment"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
+
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await context.params
     await dbConnect()
-    const payment = await Payment.findById(params.id).populate("Patient_ID", "FirstName LastName")
+    const payment = await Payment.findById(id).populate("Patient_ID", "FirstName LastName")
     if (!payment) {
       return NextResponse.json({ message: "Payment not found" }, { status: 404 })
     }
@@ -15,11 +19,12 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await context.params
     await dbConnect()
     const data = await request.json()
-    const payment = await Payment.findByIdAndUpdate(params.id, data, { new: true, runValidators: true }).populate(
+    const payment = await Payment.findByIdAndUpdate(id, data, { returnDocument: "after", runValidators: true }).populate(
       "Patient_ID",
       "FirstName LastName",
     )

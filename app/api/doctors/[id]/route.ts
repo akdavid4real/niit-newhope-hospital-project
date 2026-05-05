@@ -2,10 +2,14 @@ import { type NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/mongodb"
 import Doctor from "@/models/Doctor"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
+
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await context.params
     await dbConnect()
-    const doctor = await Doctor.findById(params.id).populate("Ward_ID", "WardName")
+    const doctor = await Doctor.findById(id).populate("Ward_ID", "WardName")
     if (!doctor) {
       return NextResponse.json({ message: "Doctor not found" }, { status: 404 })
     }
@@ -15,11 +19,12 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await context.params
     await dbConnect()
     const data = await request.json()
-    const doctor = await Doctor.findByIdAndUpdate(params.id, data, { new: true, runValidators: true }).populate(
+    const doctor = await Doctor.findByIdAndUpdate(id, data, { returnDocument: "after", runValidators: true }).populate(
       "Ward_ID",
       "WardName",
     )
@@ -32,10 +37,11 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await context.params
     await dbConnect()
-    const doctor = await Doctor.findByIdAndDelete(params.id)
+    const doctor = await Doctor.findByIdAndDelete(id)
     if (!doctor) {
       return NextResponse.json({ message: "Doctor not found" }, { status: 404 })
     }

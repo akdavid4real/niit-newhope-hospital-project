@@ -38,8 +38,9 @@ export default function DoctorsPage() {
     try {
       const response = await fetch("/api/doctors")
       const data = await response.json()
-      setDoctors(data)
+      setDoctors(Array.isArray(data) ? data : [])
     } catch (error) {
+      setDoctors([])
       toast({
         title: "Error",
         description: "Failed to fetch doctors",

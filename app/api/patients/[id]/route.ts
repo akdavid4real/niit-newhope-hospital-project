@@ -2,10 +2,14 @@ import { type NextRequest, NextResponse } from "next/server"
 import dbConnect from "@/lib/mongodb"
 import Patient from "@/models/Patient"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
+
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await context.params
     await dbConnect()
-    const patient = await Patient.findById(params.id)
+    const patient = await Patient.findById(id)
     if (!patient) {
       return NextResponse.json({ message: "Patient not found" }, { status: 404 })
     }
@@ -15,24 +19,30 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await context.params
     await dbConnect()
     const data = await request.json()
-    const patient = await Patient.findByIdAndUpdate(params.id, data, { new: true, runValidators: true })
+    const patient = await Patient.findById(id)
     if (!patient) {
       return NextResponse.json({ message: "Patient not found" }, { status: 404 })
     }
+
+    patient.set(data)
+    await patient.save()
+
     return NextResponse.json(patient)
   } catch (error: any) {
     return NextResponse.json({ message: error.message || "Error updating patient" }, { status: 400 })
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await context.params
     await dbConnect()
-    const patient = await Patient.findByIdAndDelete(params.id)
+    const patient = await Patient.findByIdAndDelete(id)
     if (!patient) {
       return NextResponse.json({ message: "Patient not found" }, { status: 404 })
     }

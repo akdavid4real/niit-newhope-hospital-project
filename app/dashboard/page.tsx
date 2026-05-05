@@ -28,7 +28,7 @@ export default function DashboardPage() {
     try {
       const response = await fetch("/api/stats/dashboard")
       const data = await response.json()
-      setStats(data)
+      setStats(data && typeof data === "object" ? data : null)
     } catch (error) {
       console.error("Error fetching dashboard stats:", error)
     } finally {

@@ -22,6 +22,7 @@ export async function GET() {
 
     return NextResponse.json(wardsWithDoctorCount)
   } catch (error) {
+    console.error("GET /api/wards/availability failed:", error)
     return NextResponse.json({ message: "Error fetching ward availability" }, { status: 500 })
   }
 }

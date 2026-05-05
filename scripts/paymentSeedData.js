@@ -1,9 +1,9 @@
 // Nigerian hospital payment seed data matching the Payment schema
-// All fields are included. Patient_ID should be filled with ObjectId when seeding.
+// Expanded to 8x the base dataset with distinct references
 
-module.exports = [
+const basePayments = [
   {
-    Patient_ID: null, // Fill with ObjectId of a patient
+    Patient_ID: null,
     TotalBill: 150000,
     AdvancePayment: 50000,
     FinalPayment: 100000,
@@ -89,3 +89,15 @@ module.exports = [
     PaymentStatus: "Pending",
   },
 ]
+
+module.exports = Array.from({ length: 8 }, (_, batchIndex) =>
+  basePayments.map((payment, paymentIndex) => ({
+    ...payment,
+    TotalBill: payment.TotalBill + batchIndex * 5000 + paymentIndex * 1000,
+    AdvancePayment: payment.AdvancePayment + batchIndex * 2000,
+    FinalPayment: payment.TotalBill + batchIndex * 5000 + paymentIndex * 1000 - (payment.AdvancePayment + batchIndex * 2000),
+    CC_Num: payment.CC_Num ? `${payment.CC_Num}-${batchIndex + 1}` : payment.CC_Num,
+    CardHoldersName: payment.CardHoldersName ? `${payment.CardHoldersName} ${batchIndex + 1}` : payment.CardHoldersName,
+    Check_Num: payment.Check_Num ? `${payment.Check_Num}-${batchIndex + 1}` : payment.Check_Num,
+  })),
+).flat()

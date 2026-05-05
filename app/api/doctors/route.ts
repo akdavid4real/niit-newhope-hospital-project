@@ -8,6 +8,7 @@ export async function GET() {
     const doctors = await Doctor.find().populate("Ward_ID", "WardName").sort({ createdAt: -1 })
     return NextResponse.json(doctors)
   } catch (error) {
+    console.error("GET /api/doctors failed:", error)
     return NextResponse.json({ message: "Error fetching doctors" }, { status: 500 })
   }
 }
@@ -21,6 +22,7 @@ export async function POST(request: NextRequest) {
     await doctor.populate("Ward_ID", "WardName")
     return NextResponse.json(doctor, { status: 201 })
   } catch (error: any) {
+    console.error("POST /api/doctors failed:", error)
     return NextResponse.json({ message: error.message || "Error creating doctor" }, { status: 400 })
   }
 }

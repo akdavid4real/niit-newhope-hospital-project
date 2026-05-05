@@ -1,9 +1,12 @@
 const mongoose = require("mongoose")
 
-// MongoDB connection
+const wardSeedData = require("./wardSeedData")
+const doctorSeedData = require("./doctorSeedData")
+const patientSeedData = require("./patientSeedData")
+const paymentSeedData = require("./paymentSeedData")
+
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/newhope-hospital"
 
-// Models (simplified for seeding)
 const wardSchema = new mongoose.Schema(
   {
     WardName: { type: String, required: true },
@@ -37,6 +40,9 @@ const patientSchema = new mongoose.Schema(
     Admit_Date: { type: Date, required: true },
     Discharge_Date: { type: Date },
     Status: { type: String, enum: ["Admitted", "Discharged"], default: "Admitted" },
+    Treatment_Type: { type: String, required: true },
+    DoctorID: { type: mongoose.Schema.Types.ObjectId, ref: "Doctor", required: true },
+    Ward_ID: { type: mongoose.Schema.Types.ObjectId, ref: "Ward", required: true },
   },
   { timestamps: true },
 )
@@ -74,289 +80,84 @@ const Patient = mongoose.model("Patient", patientSchema)
 const MedicalHistory = mongoose.model("MedicalHistory", historySchema)
 const Payment = mongoose.model("Payment", paymentSchema)
 
+function parseAdmitDate(value) {
+  return new Date(value)
+}
+
 async function seedDatabase() {
   try {
     await mongoose.connect(MONGODB_URI)
     console.log("Connected to MongoDB")
 
-    // Clear existing data
-    await Promise.all([
-      Ward.deleteMany({}),
-      Doctor.deleteMany({}),
-      Patient.deleteMany({}),
-      MedicalHistory.deleteMany({}),
-      Payment.deleteMany({}),
-    ])
+    await Promise.all([Ward.deleteMany({}), Doctor.deleteMany({}), Patient.deleteMany({}), MedicalHistory.deleteMany({}), Payment.deleteMany({})])
     console.log("Cleared existing data")
 
-    // Seed Wards
-    const wards = await Ward.insertMany([
-      { WardName: "ICU", TotalBeds: 20, AvailableBeds: 5, WardType: "Intensive Care" },
-      { WardName: "General_Ward", TotalBeds: 50, AvailableBeds: 15, WardType: "General Medicine" },
-      { WardName: "Emergency", TotalBeds: 15, AvailableBeds: 8, WardType: "Emergency Care" },
-      { WardName: "OPD", TotalBeds: 10, AvailableBeds: 10, WardType: "Outpatient Department" },
-    ])
+    const wards = await Ward.insertMany(wardSeedData)
     console.log("Seeded wards")
 
-    // Seed Doctors
-    const doctors = await Doctor.insertMany([
-      {
-        FirstName: "Adebayo",
-        LastName: "Ogundimu",
-        Phone_Num: "+2348012345678",
-        Employment_Type: "Resident",
-        Ward_ID: wards[0]._id,
-      },
-      {
-        FirstName: "Fatima",
-        LastName: "Abdullahi",
-        Phone_Num: "+2348023456789",
-        Employment_Type: "Resident",
-        Ward_ID: wards[1]._id,
-      },
-      {
-        FirstName: "Chinedu",
-        LastName: "Okwu",
-        Phone_Num: "+2348034567890",
-        Employment_Type: "Visiting",
-        Ward_ID: wards[2]._id,
-      },
-      {
-        FirstName: "Aisha",
-        LastName: "Bello",
-        Phone_Num: "+2348045678901",
-        Employment_Type: "Resident",
-        Ward_ID: wards[0]._id,
-      },
-      {
-        FirstName: "Emeka",
-        LastName: "Nwosu",
-        Phone_Num: "+2348056789012",
-        Employment_Type: "Visiting",
-        Ward_ID: wards[3]._id,
-      },
-    ])
+    const doctorsWithRefs = doctorSeedData.map((doctor, index) => ({
+      ...doctor,
+      Ward_ID: wards[index % wards.length]._id,
+    }))
+    const doctors = await Doctor.insertMany(doctorsWithRefs)
     console.log("Seeded doctors")
 
-    // Seed Patients
-    const patients = await Patient.insertMany([
-      {
-        FirstName: "Olumide",
-        LastName: "Adeyemi",
-        Age: 45,
-        Gender: "Male",
-        Phone_Num: "+2348067890123",
-        Address: "123 Victoria Island, Lagos",
-        Blood_Grp: "O+",
-        Admit_Date: new Date("2024-01-15"),
-        Status: "Admitted",
-      },
-      {
-        FirstName: "Kemi",
-        LastName: "Okafor",
-        Age: 32,
-        Gender: "Female",
-        Phone_Num: "+2348078901234",
-        Address: "456 Ikeja, Lagos",
-        Blood_Grp: "A+",
-        Admit_Date: new Date("2024-01-18"),
-        Status: "Admitted",
-      },
-      {
-        FirstName: "Ibrahim",
-        LastName: "Musa",
-        Age: 28,
-        Gender: "Male",
-        Phone_Num: "+2348089012345",
-        Address: "789 Abuja FCT",
-        Blood_Grp: "B+",
-        Admit_Date: new Date("2024-01-20"),
-        Status: "Discharged",
-        Discharge_Date: new Date("2024-01-25"),
-      },
-      {
-        FirstName: "Ngozi",
-        LastName: "Eze",
-        Age: 55,
-        Gender: "Female",
-        Phone_Num: "+2348090123456",
-        Address: "321 Port Harcourt, Rivers",
-        Blood_Grp: "AB+",
-        Admit_Date: new Date("2024-01-22"),
-        Status: "Admitted",
-      },
-      {
-        FirstName: "Yusuf",
-        LastName: "Garba",
-        Age: 38,
-        Gender: "Male",
-        Phone_Num: "+2348001234567",
-        Address: "654 Kano State",
-        Blood_Grp: "O-",
-        Admit_Date: new Date("2024-01-25"),
-        Status: "Admitted",
-      },
-      {
-        FirstName: "Blessing",
-        LastName: "Okonkwo",
-        Age: 29,
-        Gender: "Female",
-        Phone_Num: "+2348012345679",
-        Address: "987 Enugu State",
-        Blood_Grp: "A-",
-        Admit_Date: new Date("2024-01-28"),
-        Status: "Admitted",
-      },
-      {
-        FirstName: "Ahmed",
-        LastName: "Aliyu",
-        Age: 42,
-        Gender: "Male",
-        Phone_Num: "+2348023456780",
-        Address: "147 Kaduna State",
-        Blood_Grp: "B-",
-        Admit_Date: new Date("2024-01-30"),
-        Status: "Discharged",
-        Discharge_Date: new Date("2024-02-05"),
-      },
-      {
-        FirstName: "Chioma",
-        LastName: "Nnamdi",
-        Age: 26,
-        Gender: "Female",
-        Phone_Num: "+2348034567891",
-        Address: "258 Owerri, Imo",
-        Blood_Grp: "AB-",
-        Admit_Date: new Date("2024-02-01"),
-        Status: "Admitted",
-      },
-      {
-        FirstName: "Suleiman",
-        LastName: "Usman",
-        Age: 51,
-        Gender: "Male",
-        Phone_Num: "+2348045678902",
-        Address: "369 Maiduguri, Borno",
-        Blood_Grp: "O+",
-        Admit_Date: new Date("2024-02-03"),
-        Status: "Admitted",
-      },
-      {
-        FirstName: "Grace",
-        LastName: "Akpan",
-        Age: 34,
-        Gender: "Female",
-        Phone_Num: "+2348056789013",
-        Address: "741 Uyo, Akwa Ibom",
-        Blood_Grp: "A+",
-        Admit_Date: new Date("2024-02-05"),
-        Status: "Admitted",
-      },
-    ])
+    const patientsWithRefs = patientSeedData.map((patient, index) => {
+      const doctor = doctors[index % doctors.length]
+      const ward = wards[index % wards.length]
+      return {
+        ...patient,
+        Admit_Date: parseAdmitDate(patient.Admit_Date),
+        DoctorID: doctor._id,
+        Ward_ID: ward._id,
+        Discharge_Date: index % 4 === 0 ? new Date(new Date(patient.Admit_Date).getTime() + 5 * 24 * 60 * 60 * 1000) : undefined,
+        Status: index % 4 === 0 ? "Discharged" : patient.Status,
+      }
+    })
+    const patients = await Patient.insertMany(patientsWithRefs)
     console.log("Seeded patients")
 
-    // Seed Medical History
-    const histories = await MedicalHistory.insertMany([
-      {
-        Patient_ID: patients[0]._id,
-        Doctor_ID: doctors[0]._id,
-        Disease: "Hypertension",
-        Treatment: "ACE inhibitors, lifestyle changes",
-        OriginalWard: wards[0]._id,
-      },
-      {
-        Patient_ID: patients[1]._id,
-        Doctor_ID: doctors[1]._id,
-        Disease: "Malaria",
-        Treatment: "Artemisinin-based combination therapy",
-        OriginalWard: wards[1]._id,
-      },
-      {
-        Patient_ID: patients[2]._id,
-        Doctor_ID: doctors[2]._id,
-        Disease: "Appendicitis",
-        Treatment: "Appendectomy",
-        OriginalWard: wards[2]._id,
-        DischargeWard: wards[1]._id,
-      },
-      {
-        Patient_ID: patients[3]._id,
-        Doctor_ID: doctors[0]._id,
-        Disease: "Diabetes Type 2",
-        Treatment: "Metformin, insulin therapy",
-        OriginalWard: wards[0]._id,
-      },
-      {
-        Patient_ID: patients[4]._id,
-        Doctor_ID: doctors[1]._id,
-        Disease: "Pneumonia",
-        Treatment: "Antibiotics, oxygen therapy",
-        OriginalWard: wards[1]._id,
-      },
-      {
-        Patient_ID: patients[5]._id,
-        Doctor_ID: doctors[3]._id,
-        Disease: "Gastroenteritis",
-        Treatment: "Fluid replacement, antibiotics",
-        OriginalWard: wards[1]._id,
-      },
-    ])
+    const historyTemplates = [
+      "Hypertension",
+      "Malaria",
+      "Appendicitis",
+      "Diabetes Type 2",
+      "Pneumonia",
+      "Gastroenteritis",
+      "Asthma",
+      "Typhoid Fever",
+    ]
+
+    const histories = await MedicalHistory.insertMany(
+      patients.slice(0, 48).map((patient, index) => {
+        const doctor = doctors[index % doctors.length]
+        const ward = wards[index % wards.length]
+        const dischargeWard = wards[(index + 1) % wards.length]
+
+        return {
+          Patient_ID: patient._id,
+          Doctor_ID: doctor._id,
+          Disease: historyTemplates[index % historyTemplates.length],
+          Treatment: `Treatment plan ${index + 1}`,
+          OriginalWard: ward._id,
+          DischargeWard: index % 3 === 0 ? dischargeWard._id : undefined,
+        }
+      }),
+    )
     console.log("Seeded medical history")
 
-    // Seed Payments
-    const payments = await Payment.insertMany([
-      {
-        Patient_ID: patients[0]._id,
-        TotalBill: 150000,
-        AdvancePayment: 50000,
-        FinalPayment: 100000,
-        PaymentMethod: "Cash",
-        PaymentStatus: "Paid",
-      },
-      {
-        Patient_ID: patients[1]._id,
-        TotalBill: 75000,
-        AdvancePayment: 25000,
-        FinalPayment: 50000,
-        PaymentMethod: "Bank_Transfer",
-        PaymentStatus: "Pending",
-      },
-      {
-        Patient_ID: patients[2]._id,
-        TotalBill: 300000,
-        AdvancePayment: 100000,
-        FinalPayment: 200000,
-        PaymentMethod: "Credit_Card",
-        PaymentStatus: "Paid",
-        CC_Num: "4532-1234-5678-9012",
-        CardHoldersName: "Ibrahim Musa",
-      },
-      {
-        Patient_ID: patients[3]._id,
-        TotalBill: 200000,
-        AdvancePayment: 80000,
-        FinalPayment: 120000,
-        PaymentMethod: "Check",
-        PaymentStatus: "Pending",
-        Check_Num: "CHK001234",
-      },
-      {
-        Patient_ID: patients[4]._id,
-        TotalBill: 120000,
-        AdvancePayment: 40000,
-        FinalPayment: 80000,
-        PaymentMethod: "Cash",
-        PaymentStatus: "Paid",
-      },
-      {
-        Patient_ID: patients[5]._id,
-        TotalBill: 90000,
-        AdvancePayment: 30000,
-        FinalPayment: 60000,
-        PaymentMethod: "Bank_Transfer",
-        PaymentStatus: "Pending",
-      },
-    ])
+    const paymentsWithRefs = paymentSeedData.map((payment, index) => {
+      const patient = patients[index % patients.length]
+      const totalBill = payment.TotalBill
+      const advancePayment = payment.AdvancePayment
+
+      return {
+        ...payment,
+        Patient_ID: patient._id,
+        FinalPayment: totalBill - advancePayment,
+      }
+    })
+    const payments = await Payment.insertMany(paymentsWithRefs)
     console.log("Seeded payments")
 
     console.log("Database seeded successfully!")

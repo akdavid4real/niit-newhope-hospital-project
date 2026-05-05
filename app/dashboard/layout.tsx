@@ -14,17 +14,30 @@ export default function DashboardLayout({
 }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
     const token = localStorage.getItem("token")
+    const sidebarCollapsed = localStorage.getItem("sidebar-collapsed")
     if (!token) {
       router.push("/auth/login")
     } else {
       setIsAuthenticated(true)
     }
+    if (sidebarCollapsed) {
+      setIsSidebarCollapsed(sidebarCollapsed === "true")
+    }
     setIsLoading(false)
   }, [router])
+
+  const toggleSidebarCollapse = () => {
+    setIsSidebarCollapsed((current) => {
+      const next = !current
+      localStorage.setItem("sidebar-collapsed", String(next))
+      return next
+    })
+  }
 
   if (isLoading) {
     return (
@@ -40,10 +53,14 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      <aside className="hidden lg:block fixed inset-y-0 left-0 w-64 bg-white border-r shadow-sm z-30">
-        <Sidebar />
+      <aside
+        className={`hidden lg:block fixed inset-y-0 left-0 bg-white border-r shadow-sm z-30 transition-all duration-300 ${
+          isSidebarCollapsed ? "w-20" : "w-64"
+        }`}
+      >
+        <Sidebar isCollapsed={isSidebarCollapsed} onToggleCollapse={toggleSidebarCollapse} />
       </aside>
-      <div className="flex-1 flex flex-col lg:ml-64 min-h-screen">
+      <div className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${isSidebarCollapsed ? "lg:ml-20" : "lg:ml-64"}`}>
         <Navbar />
         <main className="flex-1 p-4 md:p-8 max-w-6xl w-full mx-auto">
           {children}

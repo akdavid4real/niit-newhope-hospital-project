@@ -40,7 +40,7 @@ export default function PatientsPage() {
     try {
       const response = await fetch("/api/patients")
       const data = await response.json()
-      setPatients(data)
+      setPatients(Array.isArray(data) ? data : [])
     } catch (error) {
       toast({
         title: "Error",
