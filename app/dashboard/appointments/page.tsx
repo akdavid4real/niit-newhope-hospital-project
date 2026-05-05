@@ -75,6 +75,8 @@ export default function AppointmentsPage() {
     {
       key: "name",
       label: "Patient",
+      headerClassName: "w-[240px]",
+      cellClassName: "min-w-[240px]",
       render: (_: unknown, appointment: Appointment) => (
         <div>
           <div className="font-medium text-gray-900">
@@ -87,32 +89,47 @@ export default function AppointmentsPage() {
     {
       key: "Preferred_Date",
       label: "Preferred Date",
+      headerClassName: "w-[160px]",
       render: (value: string) => new Date(value).toLocaleDateString(),
     },
     {
       key: "Reason_For_Visit",
       label: "Reason",
-      render: (value: string) => <div className="max-w-xs whitespace-normal text-sm text-gray-700">{value}</div>,
+      headerClassName: "w-[360px]",
+      cellClassName: "whitespace-normal max-w-[360px]",
+      render: (value: string) => {
+        const preview = value.length > 110 ? `${value.slice(0, 110).trimEnd()}...` : value
+        return (
+          <div className="max-w-[360px] leading-6 text-sm text-gray-700" title={value}>
+            {preview}
+          </div>
+        )
+      },
     },
     {
       key: "Status",
       label: "Status",
+      headerClassName: "w-[140px]",
       render: (value: Appointment["Status"]) => <Badge className={statusStyles[value]}>{value}</Badge>,
     },
     {
       key: "Assigned_DoctorID",
       label: "Assigned Doctor",
+      headerClassName: "w-[220px]",
+      cellClassName: "min-w-[180px] whitespace-normal",
       render: (doctor: Appointment["Assigned_DoctorID"]) =>
         doctor ? `${doctor.FirstName} ${doctor.LastName}` : "Unassigned",
     },
     {
       key: "Assigned_Ward_ID",
       label: "Ward",
+      headerClassName: "w-[160px]",
       render: (ward: Appointment["Assigned_Ward_ID"]) => ward?.WardName || "Unassigned",
     },
     {
       key: "actions",
       label: "Actions",
+      headerClassName: "w-[160px]",
       render: (_: unknown, appointment: Appointment) => (
         <Button size="sm" variant="outline" onClick={() => setSelectedAppointment(appointment)}>
           <SquarePen className="h-4 w-4 mr-2" />

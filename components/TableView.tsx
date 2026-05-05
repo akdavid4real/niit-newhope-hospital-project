@@ -2,6 +2,8 @@ import type React from "react"
 interface Column {
   key: string
   label: string
+  headerClassName?: string
+  cellClassName?: string
   render?: (value: any, row: any) => React.ReactNode
 }
 
@@ -40,7 +42,7 @@ export default function TableView({ data, columns, isLoading }: TableViewProps) 
             {columns.map((column) => (
               <th
                 key={column.key}
-                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${column.headerClassName || ""}`}
               >
                 {column.label}
               </th>
@@ -51,7 +53,10 @@ export default function TableView({ data, columns, isLoading }: TableViewProps) 
           {data.map((row, index) => (
             <tr key={index} className="hover:bg-gray-50">
               {columns.map((column) => (
-                <td key={column.key} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                <td
+                  key={column.key}
+                  className={`px-6 py-4 text-sm text-gray-900 align-top ${column.cellClassName || "whitespace-nowrap"}`}
+                >
                   {column.render ? column.render(row[column.key], row) : row[column.key]}
                 </td>
               ))}
