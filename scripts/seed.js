@@ -3,7 +3,9 @@ const mongoose = require("mongoose")
 const wardSeedData = require("./wardSeedData")
 const doctorSeedData = require("./doctorSeedData")
 const patientSeedData = require("./patientSeedData")
+const medicalHistorySeedData = require("./medicalHistorySeedData")
 const paymentSeedData = require("./paymentSeedData")
+const appointmentSeedData = require("./appointmentSeedData")
 
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/newhope-hospital"
 
@@ -74,11 +76,30 @@ const paymentSchema = new mongoose.Schema(
   { timestamps: true },
 )
 
+const appointmentSchema = new mongoose.Schema(
+  {
+    FirstName: { type: String, required: true },
+    LastName: { type: String, required: true },
+    Phone_Num: { type: String, required: true },
+    Email: String,
+    Age: Number,
+    Gender: { type: String, enum: ["Male", "Female", "Other"] },
+    Preferred_Date: { type: Date, required: true },
+    Reason_For_Visit: { type: String, required: true },
+    Notes: String,
+    Status: { type: String, enum: ["Pending", "Confirmed", "Cancelled", "Completed"], default: "Pending" },
+    Assigned_DoctorID: { type: mongoose.Schema.Types.ObjectId, ref: "Doctor", default: null },
+    Assigned_Ward_ID: { type: mongoose.Schema.Types.ObjectId, ref: "Ward", default: null },
+  },
+  { timestamps: true },
+)
+
 const Ward = mongoose.model("Ward", wardSchema)
 const Doctor = mongoose.model("Doctor", doctorSchema)
 const Patient = mongoose.model("Patient", patientSchema)
 const MedicalHistory = mongoose.model("MedicalHistory", historySchema)
 const Payment = mongoose.model("Payment", paymentSchema)
+const Appointment = mongoose.model("Appointment", appointmentSchema)
 
 function parseAdmitDate(value) {
   return new Date(value)
@@ -88,8 +109,16 @@ async function seedDatabase() {
   try {
     await mongoose.connect(MONGODB_URI)
     console.log("Connected to MongoDB")
+    console.log(`Using database: ${mongoose.connection.name}`)
 
-    await Promise.all([Ward.deleteMany({}), Doctor.deleteMany({}), Patient.deleteMany({}), MedicalHistory.deleteMany({}), Payment.deleteMany({})])
+    await Promise.all([
+      Ward.deleteMany({}),
+      Doctor.deleteMany({}),
+      Patient.deleteMany({}),
+      MedicalHistory.deleteMany({}),
+      Payment.deleteMany({}),
+      Appointment.deleteMany({}),
+    ])
     console.log("Cleared existing data")
 
     const wards = await Ward.insertMany(wardSeedData)
@@ -117,30 +146,21 @@ async function seedDatabase() {
     const patients = await Patient.insertMany(patientsWithRefs)
     console.log("Seeded patients")
 
-    const historyTemplates = [
-      "Hypertension",
-      "Malaria",
-      "Appendicitis",
-      "Diabetes Type 2",
-      "Pneumonia",
-      "Gastroenteritis",
-      "Asthma",
-      "Typhoid Fever",
-    ]
-
     const histories = await MedicalHistory.insertMany(
-      patients.slice(0, 48).map((patient, index) => {
+      medicalHistorySeedData.map((history, index) => {
+        const patient = patients[index % patients.length]
         const doctor = doctors[index % doctors.length]
         const ward = wards[index % wards.length]
-        const dischargeWard = wards[(index + 1) % wards.length]
+        const dischargeWard =
+          typeof history.DischargeWardOffset === "number" ? wards[(index + history.DischargeWardOffset) % wards.length] : undefined
 
         return {
+          Disease: history.Disease,
+          Treatment: history.Treatment,
           Patient_ID: patient._id,
           Doctor_ID: doctor._id,
-          Disease: historyTemplates[index % historyTemplates.length],
-          Treatment: `Treatment plan ${index + 1}`,
           OriginalWard: ward._id,
-          DischargeWard: index % 3 === 0 ? dischargeWard._id : undefined,
+          DischargeWard: dischargeWard?._id,
         }
       }),
     )
@@ -160,10 +180,52 @@ async function seedDatabase() {
     const payments = await Payment.insertMany(paymentsWithRefs)
     console.log("Seeded payments")
 
+    const appointmentsWithRefs = appointmentSeedData.map((appointment, index) => {
+      const doctor =
+        typeof appointment.AssignedDoctorOffset === "number"
+          ? doctors[(index + appointment.AssignedDoctorOffset) % doctors.length]
+          : null
+      const ward =
+        typeof appointment.AssignedWardOffset === "number"
+          ? wards[(index + appointment.AssignedWardOffset) % wards.length]
+          : null
+
+      return {
+        FirstName: appointment.FirstName,
+        LastName: appointment.LastName,
+        Phone_Num: appointment.Phone_Num,
+        Email: appointment.Email || undefined,
+        Age: appointment.Age,
+        Gender: appointment.Gender,
+        Preferred_Date: new Date(appointment.Preferred_Date),
+        Reason_For_Visit: appointment.Reason_For_Visit,
+        Notes: appointment.Notes || undefined,
+        Status: appointment.Status,
+        Assigned_DoctorID: doctor?._id || null,
+        Assigned_Ward_ID: ward?._id || null,
+      }
+    })
+    const appointments = await Appointment.insertMany(appointmentsWithRefs)
+    console.log("Seeded appointments")
+
     console.log("Database seeded successfully!")
-    console.log(
-      `Seeded: ${wards.length} wards, ${doctors.length} doctors, ${patients.length} patients, ${histories.length} history records, ${payments.length} payments`,
-    )
+    console.table({
+      wards: wards.length,
+      doctors: doctors.length,
+      patients: patients.length,
+      medicalHistories: histories.length,
+      payments: payments.length,
+      appointments: appointments.length,
+    })
+    console.log("MongoDB collection names:")
+    console.table({
+      wards: Ward.collection.name,
+      doctors: Doctor.collection.name,
+      patients: Patient.collection.name,
+      medicalHistories: MedicalHistory.collection.name,
+      payments: Payment.collection.name,
+      appointments: Appointment.collection.name,
+    })
   } catch (error) {
     console.error("Error seeding database:", error)
   } finally {

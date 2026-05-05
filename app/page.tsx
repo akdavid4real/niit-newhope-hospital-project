@@ -45,11 +45,11 @@ export default function HomePage() {
             care.
           </p>
           <div className="flex justify-center space-x-4">
-            <Button size="lg" className="bg-green-600 hover:bg-green-700">
-              Book Appointment
+            <Button asChild size="lg" className="bg-green-600 hover:bg-green-700">
+              <Link href="/appointments">Book Appointment</Link>
             </Button>
-            <Button size="lg" variant="outline">
-              Emergency Services
+            <Button asChild size="lg" variant="outline">
+              <a href="tel:+234012345678">Emergency Services</a>
             </Button>
           </div>
         </div>
@@ -277,12 +277,12 @@ export default function HomePage() {
                   </Link>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white">
+                  <Link href="/appointments" className="hover:text-white">
                     Book Appointment
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white">
+                  <a href="tel:+234012345678" className="hover:text-white">
                     Emergency
                   </a>
                 </li>

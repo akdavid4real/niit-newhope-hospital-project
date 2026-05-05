@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import {
   Heart,
   LayoutDashboard,
+  CalendarDays,
   Users,
   UserCheck,
   Building,
@@ -22,6 +23,7 @@ import { useToast } from "@/hooks/use-toast"
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Appointments", href: "/dashboard/appointments", icon: CalendarDays },
   { name: "Patients", href: "/dashboard/patients", icon: Users },
   { name: "Doctors", href: "/dashboard/doctors", icon: UserCheck },
   { name: "Wards", href: "/dashboard/wards", icon: Building },
